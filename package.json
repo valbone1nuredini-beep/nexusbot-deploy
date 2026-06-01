@@ -1,0 +1,19 @@
+{
+  "name": "nexusbot",
+  "version": "1.0.0",
+  "description": "NexusBot Discord bot",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "deploy-commands": "node deploy-commands.js"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "discord.js": "^14.15.3",
+    "dotenv": "^16.4.5",
+    "@anthropic-ai/sdk": "^0.39.0"
+  }
+}
