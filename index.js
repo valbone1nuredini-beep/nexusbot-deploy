@@ -8,7 +8,7 @@ import Anthropic from '@anthropic-ai/sdk';
 
 // Load .env from the project root (one level up from /bot)
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: resolve(__dirname, '../.env') });
+dotenv.config({ path: resolve(__dirname, '.env') });
 
 // ── Anthropic (Claude) client ─────────────────────────────────────────────────
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
