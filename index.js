@@ -4,38 +4,46 @@ import { readdirSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 import dotenv from 'dotenv';
-import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 // Load .env from the project root (one level up from /bot)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
 
 // ── Anthropic (Claude) client ─────────────────────────────────────────────────
-// Only init Anthropic if the key exists
-const anthropic = process.env.ANTHROPIC_API_KEY
-  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+// Only init OpenAI if the key exists
+const openai = process.env.OPENAI_API_KEY
+  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
 
 async function getClaudeReply(userMessage, username, serverName) {
   // If no API key, log clearly and use fallback
-  if (!anthropic) {
-    console.warn('⚠️  ANTHROPIC_API_KEY not set — Claude AI disabled. Add it to Railway environment variables.');
+  if (!openai) {
+    console.warn('⚠️  OPENAI_API_KEY not set — ChatGPT AI disabled. Add it to Railway environment variables.');
   } else {
     try {
-      const msg = await anthropic.messages.create({
-        model: 'claude-opus-4-5',
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
         max_tokens: 200,
-        system: `You are NexusBot, a witty and helpful Discord bot for the server "${serverName}".
+        messages: [
+          {
+            role: 'system',
+            content: `You are NexusBot, a witty and helpful Discord bot for the server "${serverName}".
 Keep replies SHORT (1-3 sentences max), casual, conversational and fun.
 You can be a little sarcastic but always friendly and helpful.
 If someone asks you something, actually answer it properly.
-Never say you're Claude or an AI assistant — you are NexusBot.
-Never say "NexusBot on duty" or "reporting for duty" — that's cringe.`,
-        messages: [{ role: 'user', content: `${username} said: "${userMessage || 'just pinged you with no message'}"` }],
+Never say you're ChatGPT or an AI assistant — you are NexusBot.
+Never say "NexusBot on duty" or "reporting for duty" — that's cringe.`
+          },
+          {
+            role: 'user',
+            content: `${username} said: "${userMessage || 'just pinged you with no message'}"`
+          }
+        ],
       });
-      return msg.content[0].text;
+      return completion.choices[0].message.content;
     } catch (err) {
-      console.error('❌ Claude API error:', err.message);
+      console.error('❌ OpenAI API error:', err.message);
     }
   }
 
