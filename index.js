@@ -11,30 +11,52 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
 
 // ── Anthropic (Claude) client ─────────────────────────────────────────────────
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+// Only init Anthropic if the key exists
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
 
 async function getClaudeReply(userMessage, username, serverName) {
-  try {
-    const msg = await anthropic.messages.create({
-      model: 'claude-opus-4-5',
-      max_tokens: 150,
-      system: `You are NexusBot, a witty and helpful Discord bot for the server "${serverName}". 
-Keep replies SHORT (1-2 sentences max), casual, and fun. 
-You can be a little sarcastic but always friendly. 
-Never break character. Never say you're Claude or an AI assistant.`,
-      messages: [{ role: 'user', content: `${username} pinged you and said: "${userMessage || 'just pinged you with no message'}"` }],
-    });
-    return msg.content[0].text;
-  } catch (err) {
-    // Fallback responses if Claude fails
+  // If no API key, log clearly and use fallback
+  if (!anthropic) {
+    console.warn('⚠️  ANTHROPIC_API_KEY not set — Claude AI disabled. Add it to Railway environment variables.');
+  } else {
+    try {
+      const msg = await anthropic.messages.create({
+        model: 'claude-opus-4-5',
+        max_tokens: 200,
+        system: `You are NexusBot, a witty and helpful Discord bot for the server "${serverName}".
+Keep replies SHORT (1-3 sentences max), casual, conversational and fun.
+You can be a little sarcastic but always friendly and helpful.
+If someone asks you something, actually answer it properly.
+Never say you're Claude or an AI assistant — you are NexusBot.
+Never say "NexusBot on duty" or "reporting for duty" — that's cringe.`,
+        messages: [{ role: 'user', content: `${username} said: "${userMessage || 'just pinged you with no message'}"` }],
+      });
+      return msg.content[0].text;
+    } catch (err) {
+      console.error('❌ Claude API error:', err.message);
+    }
+  }
+
+  // Fallback — only used if Claude fails or key is missing
+  const text = (userMessage || '').toLowerCase();
+  if (text.includes('hello') || text.includes('hi') || text.includes('hey')) {
+    return `Hey ${username}! 👋 What's up?`;
+  } else if (text.includes('help')) {
+    return `Need help? Try typing \`/\` to see all my commands! 🛠️`;
+  } else if (text.includes('ban') || text.includes('kick')) {
+    return `👀 Who are we banning? Use \`/ban @user\` and I'll handle it.`;
+  } else if (text.includes('giveaway')) {
+    return `🎉 Want to start a giveaway? Use \`/giveaway start\`!`;
+  } else if (!userMessage || userMessage.trim() === '') {
+    return `You pinged me but said nothing... bold move ${username} 👀`;
+  } else {
     const fallbacks = [
-      "⚡ Yeah, I'm here. What do you need?",
-      "🤖 Online and ready. Try a slash command!",
-      "👀 You pinged me? Bold move.",
-      "🔴 NexusBot reporting for duty.",
-      "💀 You rang? I was busy banning people.",
-      "🎯 Pong! What's up?",
-      "🔥 Still here. Still watching.",
+      `Interesting point, ${username}. I'll pretend I understood that. 😅`,
+      `I heard you ${username}! Try a slash command if you need something specific.`,
+      `👀 I'm watching. What do you need, ${username}?`,
+      `On it. Just kidding, I have no idea what you want. Try \`/help\`? 😂`,
     ];
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   }
