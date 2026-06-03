@@ -6,12 +6,15 @@ import { dirname, join, resolve } from 'path';
 import dotenv from 'dotenv';
 import OpenAI from 'openai';
 
-// Load .env from the project root (one level up from /bot)
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
 
-// ── Anthropic (Claude) client ─────────────────────────────────────────────────
-// Only init OpenAI if the key exists
+// ── Debug log on startup ──────────────────────────────────────────────────────
+console.log('🔑 OPENAI_API_KEY:', process.env.OPENAI_API_KEY
+  ? `✅ Found (${process.env.OPENAI_API_KEY.slice(0, 10)}...)`
+  : '❌ NOT SET — add OPENAI_API_KEY to Railway Variables!');
+
+// ── OpenAI client ─────────────────────────────────────────────────────────────
 const openai = process.env.OPENAI_API_KEY
   ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
   : null;
