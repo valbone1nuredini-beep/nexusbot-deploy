@@ -9,10 +9,47 @@ import OpenAI from 'openai';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
 
+// ── Auto-register slash commands on every startup ─────────────────────────────
+async function registerCommands() {
+  try {
+    const { REST, Routes } = await import('discord.js');
+    const { readdirSync: rds } = await import('fs');
+    const { pathToFileURL: ptu } = await import('url');
+
+    const cmds = [];
+    const folders = rds(join(__dirname, 'commands'));
+    for (const folder of folders) {
+      const files = rds(join(__dirname, 'commands', folder)).filter(f => f.endsWith('.js'));
+      for (const file of files) {
+        const fp = join(__dirname, 'commands', folder, file);
+        const mod = await import(ptu(fp).href);
+        if ('data' in mod) cmds.push(mod.data.toJSON());
+      }
+    }
+
+    const token = process.env.DISCORD_BOT_TOKEN;
+    const clientId = process.env.DISCORD_CLIENT_ID;
+    if (!token || !clientId) {
+      console.warn('⚠️  Skipping command registration — DISCORD_CLIENT_ID not set');
+      return;
+    }
+
+    const rest = new REST().setToken(token);
+    await rest.put(Routes.applicationCommands(clientId), { body: cmds });
+    console.log(`✅ Auto-registered ${cmds.length} slash commands with Discord`);
+  } catch (err) {
+    console.error('❌ Command registration failed:', err.message);
+  }
+}
+await registerCommands();
+
 // ── Debug log on startup ──────────────────────────────────────────────────────
 console.log('🔑 OPENAI_API_KEY:', process.env.OPENAI_API_KEY
   ? `✅ Found (${process.env.OPENAI_API_KEY.slice(0, 10)}...)`
   : '❌ NOT SET — add OPENAI_API_KEY to Railway Variables!');
+console.log('🤖 DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID
+  ? `✅ Found (${process.env.DISCORD_CLIENT_ID})`
+  : '❌ NOT SET — add DISCORD_CLIENT_ID to Railway Variables!');
 
 // ── OpenAI client ─────────────────────────────────────────────────────────────
 const openai = process.env.OPENAI_API_KEY
