@@ -276,7 +276,19 @@ if (!token) {
   process.exit(1);
 }
 
-client.login(token);
+process.on('unhandledRejection', (err) => {
+  console.error('💥 UNHANDLED REJECTION:', err);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('💥 UNCAUGHT EXCEPTION:', err);
+  process.exit(1);
+});
+
+client.login(token).catch(err => {
+  console.error('💥 LOGIN FAILED:', err.message);
+  process.exit(1);
+});
 
 // Keep-alive: log every 5 minutes so Railway doesn't sleep
 setInterval(() => {
