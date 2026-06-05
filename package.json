@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "deploy-commands": "node deploy-commands.js"
+    "deploy-commands": "node deploy-commands.js",
+    "clear-commands": "node clear-commands.js"
   },
   "engines": {
     "node": ">=20.0.0"
