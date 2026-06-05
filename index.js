@@ -277,3 +277,8 @@ if (!token) {
 }
 
 client.login(token);
+
+// Keep-alive: log every 5 minutes so Railway doesn't sleep
+setInterval(() => {
+  console.log(`💓 Keep-alive ping — ${new Date().toISOString()} — Guilds: ${client.guilds.cache.size}`);
+}, 5 * 60 * 1000);

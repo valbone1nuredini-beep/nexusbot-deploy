@@ -27,7 +27,7 @@ export async function execute(interaction, client) {
       await command.execute(interaction, client);
     } catch (err) {
       console.error(`[command:${interaction.commandName}]`, err);
-      const msg = { content: '❌ An error occurred while running this command.', ephemeral: true };
+      const msg = { content: `❌ An error occurred: ${err.message}`, ephemeral: true };
       if (interaction.deferred || interaction.replied) {
         await interaction.editReply(msg).catch(() => {});
       } else {
