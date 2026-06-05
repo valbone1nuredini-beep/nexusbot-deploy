@@ -49,7 +49,7 @@ console.log('🔑 OPENAI_API_KEY:', process.env.OPENAI_API_KEY
   : '❌ NOT SET — add OPENAI_API_KEY to Railway Variables!');
 console.log('🤖 DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID
   ? `✅ Found (${process.env.DISCORD_CLIENT_ID})`
-  : '❌ NOT SET — add DISCORD_CLIENT_ID to Railway Variables!');
+  : '❌ NOT SET — add DISCORD_CLIENT_ID=1510237796160503918 to Railway Variables!');
 
 // ── OpenAI client ─────────────────────────────────────────────────────────────
 const openai = process.env.OPENAI_API_KEY
