@@ -4,7 +4,6 @@ import { readdirSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 import dotenv from 'dotenv';
-import Groq from 'groq-sdk';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
@@ -58,11 +57,14 @@ console.log('🤖 DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID
   : '❌ NOT SET — add DISCORD_CLIENT_ID=1510237796160503918 to Railway Variables!');
 
 // ── Groq client (free AI) ─────────────────────────────────────────────────────
-const groq = process.env.GROQ_API_KEY
-  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
-  : null;
+async function getGroqClient() {
+  if (!process.env.GROQ_API_KEY) return null;
+  const { default: Groq } = await import('groq-sdk');
+  return new Groq({ apiKey: process.env.GROQ_API_KEY });
+}
 
 async function getAIReply(userMessage, username, serverName) {
+  const groq = await getGroqClient();
   if (!groq) {
     console.warn('⚠️  GROQ_API_KEY not set — AI disabled.');
   } else {

@@ -1,5 +1,4 @@
 import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
-import Groq from 'groq-sdk';
 
 export const data = new SlashCommandBuilder()
   .setName('ask')
@@ -35,6 +34,7 @@ export async function execute(interaction) {
   await interaction.deferReply({ ephemeral });
 
   try {
+    const { default: Groq } = await import('groq-sdk');
     const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
 
     const completion = await groq.chat.completions.create({
