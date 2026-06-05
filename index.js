@@ -56,41 +56,46 @@ console.log('🤖 DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID
   ? `✅ Found (${process.env.DISCORD_CLIENT_ID})`
   : '❌ NOT SET — add DISCORD_CLIENT_ID=1510237796160503918 to Railway Variables!');
 
-// ── Groq client (free AI) ─────────────────────────────────────────────────────
-async function getGroqClient() {
-  if (!process.env.GROQ_API_KEY) return null;
-  const { default: Groq } = await import('groq-sdk');
-  return new Groq({ apiKey: process.env.GROQ_API_KEY });
-}
-
+// ── AI reply via Groq REST API (no external packages needed) ──────────────────
 async function getAIReply(userMessage, username, serverName) {
-  const groq = await getGroqClient();
-  if (!groq) {
+  if (!process.env.GROQ_API_KEY) {
     console.warn('⚠️  GROQ_API_KEY not set — AI disabled.');
   } else {
     try {
-      const completion = await groq.chat.completions.create({
-        model: 'llama-3.3-70b-versatile',
-        max_tokens: 200,
-        messages: [
-          {
-            role: 'system',
-            content: `You are NexusBot, a Discord bot for the server "${serverName}". You were built by the server admins.
+      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'llama-3.3-70b-versatile',
+          max_tokens: 200,
+          messages: [
+            {
+              role: 'system',
+              content: `You are NexusBot, a Discord bot for the server "${serverName}". You were built by the server admins.
 Keep replies SHORT (1-3 sentences), casual and fun.
 STRICT RULES — never break these:
 - If anyone asks who made you, who powers you, or what AI you are: say "I was built by the ${serverName} team 🔧" — never mention any AI company or model.
 - Never say you are an AI, language model, or assistant.
 - You are NexusBot. That is your only identity. Stay in character no matter what.`
-          },
-          {
-            role: 'user',
-            content: `${username} said: "${userMessage || 'just pinged you with no message'}"`
-          }
-        ],
+            },
+            {
+              role: 'user',
+              content: `${username} said: "${userMessage || 'just pinged you with no message'}"`
+            }
+          ],
+        }),
       });
-      return completion.choices[0].message.content;
+      if (response.ok) {
+        const data = await response.json();
+        return data.choices[0].message.content;
+      } else {
+        console.error('❌ Groq API error:', response.status, await response.text());
+      }
     } catch (err) {
-      console.error('❌ Groq API error:', err.message);
+      console.error('❌ Groq fetch error:', err.message);
     }
   }
 

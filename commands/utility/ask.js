@@ -2,7 +2,7 @@ import { SlashCommandBuilder, EmbedBuilder } from 'discord.js';
 
 export const data = new SlashCommandBuilder()
   .setName('ask')
-  .setDescription('Ask NexusBot AI anything')
+  .setDescription('Ask NexusBot AI anything — powered by AI')
   .addStringOption(o =>
     o.setName('question')
       .setDescription('What do you want to ask?')
@@ -34,28 +34,39 @@ export async function execute(interaction) {
   await interaction.deferReply({ ephemeral });
 
   try {
-    const { default: Groq } = await import('groq-sdk');
-    const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.3-70b-versatile',
-      max_tokens: 800,
-      messages: [
-        {
-          role: 'system',
-          content: `You are NexusBot, a helpful Discord bot assistant for the server "${interaction.guild.name}".
+    // Use native fetch — no external packages needed
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: 800,
+        messages: [
+          {
+            role: 'system',
+            content: `You are NexusBot, a helpful Discord bot assistant for the server "${interaction.guild.name}".
 Be concise, clear and friendly. Format your response nicely for Discord (use markdown where helpful).
 Never mention any AI company, model name, or that you are an AI — you are NexusBot.
 Keep responses under 800 characters when possible.`,
-        },
-        {
-          role: 'user',
-          content: question,
-        },
-      ],
+          },
+          {
+            role: 'user',
+            content: question,
+          },
+        ],
+      }),
     });
 
-    const answer = completion.choices[0].message.content;
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Groq API error ${response.status}: ${err}`);
+    }
+
+    const data = await response.json();
+    const answer = data.choices[0].message.content;
     const chunks = splitIntoChunks(answer, 3900);
 
     const embed = new EmbedBuilder()
@@ -65,7 +76,7 @@ Keep responses under 800 characters when possible.`,
         iconURL: interaction.user.displayAvatarURL({ dynamic: true }),
       })
       .setDescription(`**${question}**\n\n${chunks[0]}`)
-      .setFooter({ text: 'NexusBot AI' })
+      .setFooter({ text: 'NexusBot AI • Powered by Groq' })
       .setTimestamp();
 
     await interaction.editReply({ embeds: [embed] });
@@ -78,13 +89,13 @@ Keep responses under 800 characters when possible.`,
     }
 
   } catch (err) {
-    console.error('❌ /ask Groq error:', err.message);
+    console.error('❌ /ask error:', err.message);
     await interaction.editReply({
       embeds: [
         new EmbedBuilder()
           .setColor(0xFF0000)
           .setTitle('❌ Error')
-          .setDescription('⚡ Something went wrong. Try again in a moment.')
+          .setDescription(`⚡ Something went wrong: ${err.message.slice(0, 200)}`)
       ],
     });
   }
