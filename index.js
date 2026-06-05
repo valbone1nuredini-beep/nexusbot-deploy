@@ -35,6 +35,12 @@ async function registerCommands() {
     }
 
     const rest = new REST().setToken(token);
+
+    // Wipe ALL commands first to prevent duplicates
+    await rest.put(Routes.applicationCommands(clientId), { body: [] });
+    console.log('🗑️  Cleared all existing slash commands');
+
+    // Re-register fresh
     await rest.put(Routes.applicationCommands(clientId), { body: cmds });
     console.log(`✅ Auto-registered ${cmds.length} slash commands with Discord`);
   } catch (err) {
