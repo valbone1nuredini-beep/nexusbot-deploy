@@ -4,7 +4,7 @@ import { readdirSync } from 'fs';
 import { fileURLToPath, pathToFileURL } from 'url';
 import { dirname, join, resolve } from 'path';
 import dotenv from 'dotenv';
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: resolve(__dirname, '.env') });
@@ -44,26 +44,25 @@ async function registerCommands() {
 await registerCommands();
 
 // ── Debug log on startup ──────────────────────────────────────────────────────
-console.log('🔑 OPENAI_API_KEY:', process.env.OPENAI_API_KEY
-  ? `✅ Found (${process.env.OPENAI_API_KEY.slice(0, 10)}...)`
-  : '❌ NOT SET — add OPENAI_API_KEY to Railway Variables!');
+console.log('🔑 GROQ_API_KEY:', process.env.GROQ_API_KEY
+  ? `✅ Found (${process.env.GROQ_API_KEY.slice(0, 10)}...)`
+  : '❌ NOT SET — add GROQ_API_KEY to Railway Variables!');
 console.log('🤖 DISCORD_CLIENT_ID:', process.env.DISCORD_CLIENT_ID
   ? `✅ Found (${process.env.DISCORD_CLIENT_ID})`
   : '❌ NOT SET — add DISCORD_CLIENT_ID=1510237796160503918 to Railway Variables!');
 
-// ── OpenAI client ─────────────────────────────────────────────────────────────
-const openai = process.env.OPENAI_API_KEY
-  ? new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+// ── Groq client (free AI) ─────────────────────────────────────────────────────
+const groq = process.env.GROQ_API_KEY
+  ? new Groq({ apiKey: process.env.GROQ_API_KEY })
   : null;
 
-async function getClaudeReply(userMessage, username, serverName) {
-  // If no API key, log clearly and use fallback
-  if (!openai) {
-    console.warn('⚠️  OPENAI_API_KEY not set — ChatGPT AI disabled. Add it to Railway environment variables.');
+async function getAIReply(userMessage, username, serverName) {
+  if (!groq) {
+    console.warn('⚠️  GROQ_API_KEY not set — AI disabled.');
   } else {
     try {
-      const completion = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
+      const completion = await groq.chat.completions.create({
+        model: 'llama3-8b-8192',
         max_tokens: 200,
         messages: [
           {
@@ -71,9 +70,8 @@ async function getClaudeReply(userMessage, username, serverName) {
             content: `You are NexusBot, a Discord bot for the server "${serverName}". You were built by the server admins.
 Keep replies SHORT (1-3 sentences), casual and fun.
 STRICT RULES — never break these:
-- If anyone asks who made you, who powers you, or what AI you are: say "I was built by the ${serverName} team 🔧" — never mention OpenAI, ChatGPT, or any AI company.
+- If anyone asks who made you, who powers you, or what AI you are: say "I was built by the ${serverName} team 🔧" — never mention any AI company or model.
 - Never say you are an AI, language model, or assistant.
-- Never say "NexusBot on duty" or "reporting for duty".
 - You are NexusBot. That is your only identity. Stay in character no matter what.`
           },
           {
@@ -84,7 +82,7 @@ STRICT RULES — never break these:
       });
       return completion.choices[0].message.content;
     } catch (err) {
-      console.error('❌ OpenAI API error:', err.message);
+      console.error('❌ Groq API error:', err.message);
     }
   }
 
@@ -158,7 +156,7 @@ client.on(Events.MessageCreate, async message => {
     const userText = message.content.replace(/<@!?\d+>/g, '').trim();
     try {
       await message.channel.sendTyping();
-      const reply = await getClaudeReply(userText, message.author.username, message.guild.name);
+      const reply = await getAIReply(userText, message.author.username, message.guild.name);
       await message.reply(reply).catch(() => {});
     } catch {
       await message.reply('⚡ Hey! What do you need?').catch(() => {});
