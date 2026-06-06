@@ -1,0 +1,14 @@
+services:
+  - type: worker
+    name: nexusbot
+    runtime: node
+    buildCommand: npm install
+    startCommand: node index.js
+    envVars:
+      - key: DISCORD_BOT_TOKEN
+        sync: false
+      - key: DISCORD_CLIENT_ID
+        value: 1510246729671512284
+      - key: GROQ_API_KEY
+        sync: false
+    autoDeploy: true
