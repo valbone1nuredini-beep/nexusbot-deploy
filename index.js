@@ -125,9 +125,9 @@ STRICT RULES — never break these:
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildMembers,       // privileged — needed for welcome/goodbye
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.MessageContent,     // privileged — needed for ping/AI replies
     GatewayIntentBits.GuildMessageReactions,
   ],
 });
@@ -292,13 +292,19 @@ process.on('uncaughtException', (err) => {
 
 client.login(token).catch(err => {
   console.error('💥 LOGIN FAILED:', err.message);
-  if (err.message.includes('disallowed intents')) {
+  if (err.message.toLowerCase().includes('intent') || err.message.includes('4014')) {
     console.error('');
-    console.error('🔧 FIX: Go to discord.com/developers/applications → your bot → Bot tab');
-    console.error('   → Privileged Gateway Intents → Enable:');
-    console.error('   ✅ Server Members Intent');
-    console.error('   ✅ Message Content Intent');
-    console.error('   → Save Changes → Redeploy');
+    console.error('════════════════════════════════════════════════════════');
+    console.error('🔧 PRIVILEGED INTENTS NOT ENABLED — DO THIS TO FIX:');
+    console.error('');
+    console.error('1. Go to: https://discord.com/developers/applications');
+    console.error('2. Click your app → Bot tab');
+    console.error('3. Scroll to "Privileged Gateway Intents"');
+    console.error('4. Toggle ON: SERVER MEMBERS INTENT');
+    console.error('5. Toggle ON: MESSAGE CONTENT INTENT');
+    console.error('6. Click SAVE CHANGES');
+    console.error('7. Come back to Railway and click Redeploy');
+    console.error('════════════════════════════════════════════════════════');
     console.error('');
   }
   process.exit(1);
