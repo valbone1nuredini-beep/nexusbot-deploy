@@ -292,6 +292,15 @@ process.on('uncaughtException', (err) => {
 
 client.login(token).catch(err => {
   console.error('💥 LOGIN FAILED:', err.message);
+  if (err.message.includes('disallowed intents')) {
+    console.error('');
+    console.error('🔧 FIX: Go to discord.com/developers/applications → your bot → Bot tab');
+    console.error('   → Privileged Gateway Intents → Enable:');
+    console.error('   ✅ Server Members Intent');
+    console.error('   ✅ Message Content Intent');
+    console.error('   → Save Changes → Redeploy');
+    console.error('');
+  }
   process.exit(1);
 });
 
