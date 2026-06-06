@@ -1,0 +1,16 @@
+app = "nexusbot"
+primary_region = "fra"
+
+[build]
+  [build.args]
+    NODE_VERSION = "20"
+
+[env]
+  DISCORD_CLIENT_ID = "1510246729671512284"
+
+[[services]]
+  internal_port = 3000
+  protocol = "tcp"
+
+[processes]
+  app = "node index.js"
