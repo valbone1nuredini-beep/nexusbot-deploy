@@ -27,11 +27,13 @@ async function registerCommands() {
     }
 
     const token = process.env.DISCORD_BOT_TOKEN;
-    const clientId = process.env.DISCORD_CLIENT_ID;
-    if (!token || !clientId) {
-      console.warn('⚠️  Skipping command registration — DISCORD_CLIENT_ID not set');
+    // Client ID is hardcoded — extracted from the bot token (first segment, base64 decoded)
+    const clientId = process.env.DISCORD_CLIENT_ID || '1510246729671512284';
+    if (!token) {
+      console.warn('⚠️  Skipping command registration — DISCORD_BOT_TOKEN not set');
       return;
     }
+    console.log(`🤖 Using Client ID: ${clientId}`);
 
     const rest = new REST().setToken(token);
 
